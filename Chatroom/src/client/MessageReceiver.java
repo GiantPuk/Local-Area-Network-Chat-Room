@@ -45,6 +45,9 @@ public class MessageReceiver implements Runnable {
             case "LOGIN_FAIL":
                 // 登录失败，已经在ChatClient中处理了
                 break;
+            case "FORCE_LOGOUT":
+                gui.appendMessage(message);
+                gui.disconnect();
         }
     }
     

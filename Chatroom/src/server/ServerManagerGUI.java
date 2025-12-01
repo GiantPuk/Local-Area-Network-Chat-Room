@@ -1,6 +1,9 @@
 package server;
 
 import javax.swing.*;
+
+import common.Message;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -107,12 +110,33 @@ public class ServerManagerGUI extends JFrame {
     }
     
     private void stopServer() {
-        // 这里需要添加停止服务器的逻辑
-        // 由于原代码没有提供停止方法，这里只是界面更新
-        startButton.setEnabled(true);
-        stopButton.setEnabled(false);
-        logMessage("服务器已停止");
+    int result = JOptionPane.showConfirmDialog(this,
+        "确定要停止服务器吗？所有在线用户将被断开连接。",
+        "确认停止服务器",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.WARNING_MESSAGE);
+    
+    if (result == JOptionPane.YES_OPTION) {
+        new Thread(() -> {
+            // 禁用停止按钮，防止重复点击
+            stopButton.setEnabled(false);
+            
+            // 调用服务器的停止方法
+            server.stopServer();
+            
+            // 更新UI状态
+            SwingUtilities.invokeLater(() -> {
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
+                logMessage("服务器已停止");
+                
+                // 清空用户列表
+                listModel.clear();
+            });
+        }).start();
     }
+}
+
     
     private void refreshUserList() {
         if (userManager != null) {
@@ -126,20 +150,18 @@ public class ServerManagerGUI extends JFrame {
     }
     
     private void kickUser() {
-        String selectedUser = userList.getSelectedValue();
-        if (selectedUser != null) {
-            int result = JOptionPane.showConfirmDialog(this, 
-                "确定要踢出用户 '" + selectedUser + "' 吗？", 
-                "确认踢出", JOptionPane.YES_NO_OPTION);
-            
-            if (result == JOptionPane.YES_OPTION) {
-                // 这里需要实现踢出用户的逻辑
-                // 由于原架构限制，需要扩展功能才能完全实现
-                logMessage("已踢出用户: " + selectedUser);
-                refreshUserList();
-            }
+    String selectedUser = userList.getSelectedValue();
+    if (selectedUser != null) {
+        int result = JOptionPane.showConfirmDialog(this, 
+            "确定要踢出用户 '" + selectedUser + "' 吗？", 
+            "确认踢出", JOptionPane.YES_NO_OPTION);
+        
+        if (result == JOptionPane.YES_OPTION) {
+            userManager.kickUser(selectedUser); 
+            refreshUserList();
         }
     }
+}
     
     public void logMessage(String message) {
         SwingUtilities.invokeLater(() -> {
