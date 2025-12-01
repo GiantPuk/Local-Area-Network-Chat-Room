@@ -83,6 +83,9 @@ public class ClientGUI extends JFrame {
         });
     }
     
+    public void disconnect(){
+        client.disconnect();
+    }
     private void sendMessage() {
         String message = inputArea.getText().trim();
         if (!message.isEmpty()) {
