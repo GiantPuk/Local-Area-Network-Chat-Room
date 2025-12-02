@@ -112,6 +112,7 @@ public class ServerManagerGUI extends JFrame {
     }
     
     private void startServer() {
+        //this.server = new ChatServer(userManager);
         new Thread(() -> {
             server.start();
         }).start();
@@ -149,6 +150,7 @@ public class ServerManagerGUI extends JFrame {
                     // 清空用户列表
                     listModel.clear();
                 });
+                System.exit(0);
             }).start();
         }
     }
