@@ -60,7 +60,11 @@ public class MainPanel extends JFrame {
         infoArea.setText("使用说明：\n" +
                         "• 启动服务器：启动聊天室服务器和管理界面\n" +
                         "• 启动客户端：启动一个新的聊天客户端\n" +
-                        "• 注意：每个窗口都在独立进程中运行，互不影响");
+                        "• 注意：每个窗口都在独立进程中运行，互不影响\n\n" +
+                        "局域网连接说明：\n" +
+                        "1. 启动服务器后，查看服务器界面显示的IP地址\n" +
+                        "2. 在客户端连接时使用服务器的局域网IP（如192.168.x.x）\n" +
+                        "3. 默认端口：8888");
         infoArea.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
         mainPanel.add(infoArea, BorderLayout.SOUTH);
         
@@ -121,6 +125,15 @@ public class MainPanel extends JFrame {
      */
     private void startServerControl() {
         System.out.println("启动服务器按钮被点击");
+        
+        // 显示防火墙提示
+        JOptionPane.showMessageDialog(this,
+            "注意：\n" +
+            "1. 如果连接失败，请检查防火墙设置\n" +
+            "2. Windows: 允许Java(TM) Platform SE binary通过防火墙\n" +
+            "3. Mac/Linux: 确保8888端口未被阻止\n" +
+            "4. 服务器启动后，请查看显示的IP地址信息",
+            "网络设置提示", JOptionPane.INFORMATION_MESSAGE);
         
         try {
             String javaHome = System.getProperty("java.home");
