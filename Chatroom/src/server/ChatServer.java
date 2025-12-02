@@ -50,7 +50,6 @@ public class ChatServer {
                 serverSocket = new ServerSocket(PORT);
                 System.out.println("聊天服务器启动，端口：" + PORT);
             }
-            
             // 显示服务器IP信息
             System.out.println("服务器IP地址信息:");
             System.out.println("1. 本机地址: localhost 或 127.0.0.1");
@@ -63,6 +62,7 @@ public class ChatServer {
                 ClientHandler clientHandler = new ClientHandler(clientSocket, userManager);
                 threadPool.execute(clientHandler);
             }
+            // return;
         } catch (IOException e) {
             if (isRunning.get()) {
                 e.printStackTrace();
