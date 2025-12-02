@@ -40,7 +40,7 @@ public class UserManager {
         users.remove(username);
     }
     
-    // 新增：踢出特定用户
+    // 踢出特定用户
     public void kickUser(String username) {
         ObjectOutputStream output = users.get(username);
         if (output != null) {
@@ -59,7 +59,7 @@ public class UserManager {
         broadcastSystemMessage("用户 " + username + " 已被踢出"); // 现在这个方法存在了
     }
     
-    // 新增：广播系统消息的便捷方法
+    // 广播系统消息的便捷方法
     public void broadcastSystemMessage(String content) {
         broadcastMessage(new Message("SYSTEM", "系统", content));
     }

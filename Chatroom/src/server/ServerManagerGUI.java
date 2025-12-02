@@ -1,12 +1,12 @@
 package server;
 
 import javax.swing.*;
-
-import common.Message;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Collections;
 
 public class ServerManagerGUI extends JFrame {
     private ChatServer server;
@@ -18,6 +18,7 @@ public class ServerManagerGUI extends JFrame {
     private JButton stopButton;
     private JButton refreshButton;
     private JButton kickButton;
+    private JLabel ipInfoLabel;
     
     public ServerManagerGUI() {
         this.userManager = new UserManager();
@@ -59,6 +60,12 @@ public class ServerManagerGUI extends JFrame {
         controlPanel.add(refreshButton);
         controlPanel.add(kickButton);
         
+        // IP信息面板
+        JPanel infoPanel = new JPanel(new FlowLayout());
+        ipInfoLabel = new JLabel("服务器IP: 请先启动服务器");
+        ipInfoLabel.setForeground(Color.BLUE);
+        infoPanel.add(ipInfoLabel);
+        
         // 日志区域
         logArea = new JTextArea();
         logArea.setEditable(false);
@@ -66,8 +73,13 @@ public class ServerManagerGUI extends JFrame {
         JScrollPane logScroll = new JScrollPane(logArea);
         logScroll.setBorder(BorderFactory.createTitledBorder("服务器日志"));
         
-        leftPanel.add(controlPanel, BorderLayout.NORTH);
-        leftPanel.add(logScroll, BorderLayout.CENTER);
+        // 创建底部面板包含按钮和日志
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(controlPanel, BorderLayout.NORTH);
+        bottomPanel.add(logScroll, BorderLayout.CENTER);
+        
+        leftPanel.add(infoPanel, BorderLayout.NORTH);
+        leftPanel.add(bottomPanel, BorderLayout.CENTER);
         
         // 右侧：用户列表
         JPanel rightPanel = new JPanel(new BorderLayout());
@@ -107,36 +119,81 @@ public class ServerManagerGUI extends JFrame {
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
         logMessage("服务器已启动，端口：8888");
+        
+        // 显示IP信息
+        displayIPInfo();
     }
     
     private void stopServer() {
-    int result = JOptionPane.showConfirmDialog(this,
-        "确定要停止服务器吗？所有在线用户将被断开连接。",
-        "确认停止服务器",
-        JOptionPane.YES_NO_OPTION,
-        JOptionPane.WARNING_MESSAGE);
-    
-    if (result == JOptionPane.YES_OPTION) {
-        new Thread(() -> {
-            // 禁用停止按钮，防止重复点击
-            stopButton.setEnabled(false);
-            
-            // 调用服务器的停止方法
-            server.stopServer();
-            
-            // 更新UI状态
-            SwingUtilities.invokeLater(() -> {
-                startButton.setEnabled(true);
+        int result = JOptionPane.showConfirmDialog(this,
+            "确定要停止服务器吗？所有在线用户将被断开连接。",
+            "确认停止服务器",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+        
+        if (result == JOptionPane.YES_OPTION) {
+            new Thread(() -> {
+                // 禁用停止按钮，防止重复点击
                 stopButton.setEnabled(false);
-                logMessage("服务器已停止");
                 
-                // 清空用户列表
-                listModel.clear();
-            });
+                // 调用服务器的停止方法
+                server.stopServer();
+                
+                // 更新UI状态
+                SwingUtilities.invokeLater(() -> {
+                    startButton.setEnabled(true);
+                    stopButton.setEnabled(false);
+                    logMessage("服务器已停止");
+                    ipInfoLabel.setText("服务器IP: 服务器已停止");
+                    
+                    // 清空用户列表
+                    listModel.clear();
+                });
+            }).start();
+        }
+    }
+    
+    private void displayIPInfo() {
+        new Thread(() -> {
+            try {
+                // 等待服务器完全启动
+                Thread.sleep(500);
+                
+                // 获取所有网络接口
+                StringBuilder ipInfo = new StringBuilder();
+                ipInfo.append("<html><b>服务器IP地址:</b><br>");
+                ipInfo.append("• 本机连接: localhost 或 127.0.0.1<br>");
+                
+                // 获取局域网IP
+                boolean hasLanIP = false;
+                for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    for (InetAddress inetAddress : Collections.list(networkInterface.getInetAddresses())) {
+                        if (!inetAddress.isLoopbackAddress() && inetAddress instanceof java.net.Inet4Address) {
+                            ipInfo.append("• 局域网连接: ").append(inetAddress.getHostAddress()).append("<br>");
+                            hasLanIP = true;
+                        }
+                    }
+                }
+                
+                if (!hasLanIP) {
+                    ipInfo.append("• 未检测到局域网IP地址<br>");
+                }
+                
+                ipInfo.append("<br>客户端连接设置:<br>");
+                ipInfo.append("&nbsp;&nbsp;服务器IP: 使用上述IP地址<br>");
+                ipInfo.append("&nbsp;&nbsp;端口号: 8888</html>");
+                
+                SwingUtilities.invokeLater(() -> {
+                    ipInfoLabel.setText(ipInfo.toString());
+                });
+                
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    ipInfoLabel.setText("<html>服务器IP: 获取失败<br>请检查网络连接</html>");
+                });
+            }
         }).start();
     }
-}
-
     
     private void refreshUserList() {
         if (userManager != null) {
@@ -150,18 +207,18 @@ public class ServerManagerGUI extends JFrame {
     }
     
     private void kickUser() {
-    String selectedUser = userList.getSelectedValue();
-    if (selectedUser != null) {
-        int result = JOptionPane.showConfirmDialog(this, 
-            "确定要踢出用户 '" + selectedUser + "' 吗？", 
-            "确认踢出", JOptionPane.YES_NO_OPTION);
-        
-        if (result == JOptionPane.YES_OPTION) {
-            userManager.kickUser(selectedUser); 
-            refreshUserList();
+        String selectedUser = userList.getSelectedValue();
+        if (selectedUser != null) {
+            int result = JOptionPane.showConfirmDialog(this, 
+                "确定要踢出用户 '" + selectedUser + "' 吗？", 
+                "确认踢出", JOptionPane.YES_NO_OPTION);
+            
+            if (result == JOptionPane.YES_OPTION) {
+                userManager.kickUser(selectedUser); 
+                refreshUserList();
+            }
         }
     }
-}
     
     public void logMessage(String message) {
         SwingUtilities.invokeLater(() -> {

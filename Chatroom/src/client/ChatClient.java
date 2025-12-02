@@ -2,9 +2,15 @@ package client;
 
 import java.io.*;
 import java.net.*;
+
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import java.awt.*;
+import java.awt.event.*; // 需要添加这个导入
 import common.Message;
 
 public class ChatClient {
@@ -42,7 +48,10 @@ public class ChatClient {
             }
             
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "连接服务器失败: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, 
+                "连接服务器失败: " + e.getMessage() + 
+                "\n请确保:\n1. 服务器已启动\n2. 防火墙已允许Java网络连接\n3. 使用正确的服务器IP地址", 
+                "连接失败", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
     }
@@ -136,8 +145,29 @@ public class ChatClient {
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            ChatClient client = new ChatClient();
-            client.connect("localhost", 8888);
+            // 创建连接配置对话框
+            JPanel panel = new JPanel(new GridLayout(2, 2));
+            panel.add(new JLabel("服务器IP地址:"));
+            JTextField ipField = new JTextField("localhost");
+            panel.add(ipField);
+            panel.add(new JLabel("端口号:"));
+            JTextField portField = new JTextField("8888");
+            panel.add(portField);
+            
+            int result = JOptionPane.showConfirmDialog(null, panel, 
+                "连接设置", JOptionPane.OK_CANCEL_OPTION);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String serverIP = ipField.getText().trim();
+                    int port = Integer.parseInt(portField.getText().trim());
+                    
+                    ChatClient client = new ChatClient();
+                    client.connect(serverIP, port);
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null, "端口号必须是数字", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            }
         });
     }
 }
